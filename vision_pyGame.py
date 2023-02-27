@@ -146,12 +146,18 @@ def drawAgain():
     for __ in big_block:
         if __.isEmpty==False:
             pygame.draw.rect(WIN,CYAN,__.rect)
+        else:
+            pygame.draw.rect(WIN,WHITE,__.rect)
     for __ in medium_block:
         if __.isEmpty==False:
             pygame.draw.rect(WIN,MAGENTA,__.rect) 
+        else:
+            pygame.draw.rect(WIN,WHITE,__.rect)
     for __ in small_block:
         if __.isEmpty==False:
-            pygame.draw.rect(WIN,YELLOW,__.rect)  
+            pygame.draw.rect(WIN,YELLOW,__.rect)
+        else:
+            pygame.draw.rect(WIN,WHITE,__.rect)
     color=[CYAN,MAGENTA,YELLOW]
     for id,c in enumerate(constructArrElement):
         for __ in c:
@@ -163,7 +169,9 @@ def drawAgain():
     return rgb_array
 
 def draw_main(render_mode,fps,no):
-    global FPS,rm
+    global FPS,rm,big_block,medium_block,small_block,constructArrElement
+    big_block=[];medium_block=[];small_block=[]
+    constructArrElement=[[] for _ in range(MX_NO_OF_DIGITS)]
     FPS,rm=fps,render_mode
     clock=pygame.time.Clock()
     no_list=[]

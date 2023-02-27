@@ -56,6 +56,7 @@ class RlNlpWorld(gym.Env):
         self.no=np.random.randint(0,1000)
         self.carry=False
         self.boxType=BOXTYPE.NONE
+        self.curr_time=0
         self._visual=vga.draw_main(self.metadata['render_modes'][self.mode],self.metadata['render_fps'],self.no)
         return self._get_obs(), self._get_info()
 ############################################
@@ -67,7 +68,7 @@ class RlNlpWorld(gym.Env):
                     if not box.isEmpty:
                         self.carry=True 
                         self.boxType=b_type
-                        box.isEmpty=False
+                        box.isEmpty=True
                         return 0 
             else:
                 return -1
@@ -93,22 +94,25 @@ class RlNlpWorld(gym.Env):
                 power/=10
             return True if self.no==result else False 
         reward=0
-        if action==ACTION.PICK_BIG:
+        if action==ACTION.PICK_BIG.value:
             reward=pick(vga.big_block,BOXTYPE.BIG)
-        elif action==ACTION.PICK_MED:
+        elif action==ACTION.PICK_MED.value:
             reward=pick(vga.medium_block,BOXTYPE.MEDIUM)
-        elif action==ACTION.PICK_SMALL:
+        elif action==ACTION.PICK_SMALL.value:
             reward=pick(vga.small_block,BOXTYPE.SMALL)
-        elif action==ACTION.PUT_BIG:
+        elif action==ACTION.PUT_BIG.value:
             reward=put(BOXTYPE.BIG)
-        elif action==ACTION.PUT_MED:
+        elif action==ACTION.PUT_MED.value:
             reward=put(BOXTYPE.MEDIUM)
-        elif action==ACTION.PUT_SMALL:
+        elif action==ACTION.PUT_SMALL.value:
             reward=put(BOXTYPE.SMALL)
 
         self._visual=vga.drawAgain()
         self.curr_time+=1
-        terminated = True if self.curr_time>self.mx_timeSteps else checkSolution()
+        solution=checkSolution() # return True is solution is correct
+        terminated=False 
+        if self.curr_time>self.mx_timeSteps or solution==True:
+            terminated=True
         if terminated:
             sign=1 if checkSolution() else -1
         reward = sign*10 if terminated else reward
