@@ -8,12 +8,12 @@ import vision_pyGame as vga
 ACTIONS
 '''
 class ACTION(Enum):
-    PICK_BIG=1
-    PICK_MED=2
-    PICK_SMALL=3
-    PUT_BIG=4
-    PUT_MED=5
-    PUT_SMALL=6
+    PICK_BIG=0
+    PICK_MED=1
+    PICK_SMALL=2
+    PUT_BIG=3
+    PUT_MED=4
+    PUT_SMALL=5
 
 '''
 BOX TYPE
@@ -28,19 +28,22 @@ class RlNlpWorld(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 ############################################
     def __init__(self,mx_timeSteps=50,render_mode=None):
-        self.no=np.random.randint(0,1000)[0]
-        self.carry=False
-        self.boxType=BOXTYPE.NONE
         self.mode=0
         if render_mode=='rgb_array':
             self.mode=1
-        self._visual=vga.draw_main(self.metadata['render_modes'][self.mode],self.metadata['render_fps'],self.no)
+        self._visual=None
         self._text='TBD'
         self._question='TBD'
         self.mx_timeSteps,self.curr_time=mx_timeSteps,0
+        # Just to remove assertion error. #
+        self.action_space = spaces.Discrete(6) 
+        self.observation_space=spaces.Dict({
+            "text": spaces.Text(min_length=1,max_length=100),"question":spaces.Text(min_length=1,max_length=100),
+            "visual": spaces.Box(low=0, high=255, shape=(vga.WIDTH,vga.HEIGHT,3), dtype=np.uint8)
+        })
 ############################################
     def _get_obs(self):
-        return {"text": self._text,"question":self._quesiton,"visual": self._visual}
+        return {"text": self._text,"question":self._question,"visual": self._visual}
 
     def _get_info(self):
         return {
@@ -50,24 +53,11 @@ class RlNlpWorld(gym.Env):
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
         super().reset(seed=seed)
-
-        # Choose the agent's location uniformly at random
-        self._agent_location = self.np_random.integers(0, self.size, size=2, dtype=int)
-
-        # We will sample the target's location randomly until it does not coincide with the agent's location
-        self._target_location = self._agent_location
-        while np.array_equal(self._target_location, self._agent_location):
-            self._target_location = self.np_random.integers(
-                0, self.size, size=2, dtype=int
-            )
-
-        observation = self._get_obs()
-        info = self._get_info()
-
-        if self.render_mode == "human":
-            self._render_frame()
-
-        return observation, info
+        self.no=np.random.randint(0,1000)
+        self.carry=False
+        self.boxType=BOXTYPE.NONE
+        self._visual=vga.draw_main(self.metadata['render_modes'][self.mode],self.metadata['render_fps'],self.no)
+        return self._get_obs(), self._get_info()
 ############################################
     def step(self, action):
 
@@ -102,7 +92,7 @@ class RlNlpWorld(gym.Env):
                 result+=cnt_box*power 
                 power/=10
             return True if self.no==result else False 
-        
+        reward=0
         if action==ACTION.PICK_BIG:
             reward=pick(vga.big_block,BOXTYPE.BIG)
         elif action==ACTION.PICK_MED:
@@ -135,3 +125,4 @@ class RlNlpWorld(gym.Env):
     def close(self):
         pass
 ############################################
+
