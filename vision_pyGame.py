@@ -1,7 +1,6 @@
 import numpy as np
 import pygame 
 
-pygame.init()
 '''
 Global Variables.
 '''
@@ -9,8 +8,7 @@ MX_NO_OF_DIGITS=3
 FPS=30
 rm=0
 WIDTH, HEIGHT = 900, 600
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("NLP_RL_GAME")
+WIN = None
 constructArrElement=[[] for _ in range(MX_NO_OF_DIGITS)]
 '''
 COLORS.
@@ -28,13 +26,13 @@ NEUTRAL = (128,128,128)
 BORDERS
 '''
 width_do,height_do=450,150
-DIGIT_OUTER=pygame.Rect(WIDTH/2-width_do/2,HEIGHT/2-height_do/2,width_do,height_do)
+DIGIT_OUTER=None
 width_di,height_di=100,100
 '''
 FONT
 '''
 FONT_SIZE=50
-FONT = pygame.font.SysFont('Arial',FONT_SIZE)
+FONT = None
 '''
 CONSTRUCTION_BOX
 '''
@@ -169,10 +167,19 @@ def drawAgain():
     return rgb_array
 
 def draw_main(render_mode,fps,no):
-    global FPS,rm,big_block,medium_block,small_block,constructArrElement
+    global FPS,rm,big_block,medium_block,small_block,constructArrElement,WIN,DIGIT_OUTER,FONT
     big_block=[];medium_block=[];small_block=[]
     constructArrElement=[[] for _ in range(MX_NO_OF_DIGITS)]
     FPS,rm=fps,render_mode
+
+    pygame.init()
+    WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("NLP_RL_GAME")
+
+    DIGIT_OUTER=pygame.Rect(WIDTH/2-width_do/2,HEIGHT/2-height_do/2,width_do,height_do)
+
+    FONT = pygame.font.SysFont('Arial',FONT_SIZE)
+
     clock=pygame.time.Clock()
     no_list=[]
     while no!=0:
@@ -181,7 +188,7 @@ def draw_main(render_mode,fps,no):
     drawWindowOneTime(no_list)
     if True:
         clock.tick(FPS)
-        for event in pygame.event.get():
-            if event.type==pygame.QUIT:
-                pygame.quit()
-            return drawAgain()
+        return drawAgain()
+
+def close_pyame():
+    pygame.quit()

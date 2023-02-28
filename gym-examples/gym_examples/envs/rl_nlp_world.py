@@ -51,7 +51,6 @@ class RlNlpWorld(gym.Env):
         }
 ############################################
     def reset(self, seed=None, options=None):
-        # We need the following line to seed self.np_random
         super().reset(seed=seed)
         self.no=np.random.randint(0,1000)
         self.carry=False
@@ -115,6 +114,7 @@ class RlNlpWorld(gym.Env):
             terminated=True
         if terminated:
             sign=1 if checkSolution() else -1
+            self.close()
         reward = sign*10 if terminated else reward
         observation = self._get_obs()
         info = self._get_info()
@@ -127,6 +127,5 @@ class RlNlpWorld(gym.Env):
         pass
 ############################################
     def close(self):
-        pass
+        vga.close_pyame()
 ############################################
-
