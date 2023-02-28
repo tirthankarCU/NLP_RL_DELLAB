@@ -173,8 +173,9 @@ def draw_main(render_mode,fps,no):
     FPS,rm=fps,render_mode
 
     pygame.init()
-    WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("NLP_RL_GAME")
+    if rm=='human':
+        WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("NLP_RL_GAME")
 
     DIGIT_OUTER=pygame.Rect(WIDTH/2-width_do/2,HEIGHT/2-height_do/2,width_do,height_do)
 
