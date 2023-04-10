@@ -32,8 +32,8 @@ class RlNlpWorld(gym.Env):
         if render_mode=='rgb_array':
             self.mode=1
         self._visual=None
-        self._text='TBD'
-        self._question='TBD'
+        self._text='#'
+        self._question='?'
         self.mx_timeSteps,self.curr_time=mx_timeSteps,0
         # Just to remove assertion error. #
         self.action_space = spaces.Discrete(6) 
