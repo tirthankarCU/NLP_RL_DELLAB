@@ -7,7 +7,8 @@ Global Variables.
 MX_NO_OF_DIGITS=3
 FPS=30
 rm=0
-WIDTH, HEIGHT = 900, 600
+frac=1
+WIDTH, HEIGHT = 900*frac, 600*frac
 WIN = None
 constructArrElement=[[] for _ in range(MX_NO_OF_DIGITS)]
 '''
@@ -25,24 +26,24 @@ NEUTRAL = (128,128,128)
 '''
 BORDERS
 '''
-width_do,height_do=450,150
+width_do,height_do=450*frac,150*frac
 DIGIT_OUTER=None
-width_di,height_di=100,100
+width_di,height_di=100*frac,100*frac
 '''
 FONT
 '''
-FONT_SIZE=50
+FONT_SIZE=50*frac
 FONT = None
 '''
 CONSTRUCTION_BOX
 '''
-w_b,h_b=32,32
-w_m,h_m=16,16
-w_s,h_s=8,8
+w_b,h_b=32*frac,32*frac
+w_m,h_m=16*frac,16*frac
+w_s,h_s=8*frac,8*frac
 '''
 CONSTRUCT BOX
 '''
-w_cb,h_cb=100,200
+w_cb,h_cb=100*frac,200*frac
 big_block=[];medium_block=[];small_block=[]
 
 class RectNode:
@@ -80,7 +81,7 @@ def drawWindowOneTime(no_list):
         f_indx+=1
         if f_indx>=len(no_list):
             break
-    offset=10
+    offset=10*frac
 # BIG BOX
     init_x=offset
     y_co=offset
