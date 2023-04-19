@@ -17,8 +17,7 @@ def crop_resize(img,dim=224):
     img=np.array(img)
     pil_image1=Image.fromarray(img)
     transform = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(dim),
+        transforms.Resize(dim),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406],
@@ -26,13 +25,18 @@ def crop_resize(img,dim=224):
         )])
     return transform(pil_image1)
 
+def crop_resize_cv2(img,dim=128):
+    sz=(dim,dim)
+    img_resized=cv2.resize(img,sz,interpolation = cv2.INTER_AREA)
+    return img_resized
+
 def phi(state):
     state_vis=state["visual"]
-    state["visual"]=np.array(crop_resize(state_vis))
+    state["visual"]=np.array(crop_resize(state_vis,dim=224))
 
 def phiXtra(state):
     state_vis=state["visual"]
-    state["visual"]=np.array(crop_resize(state_vis,dim=32))
+    state["visual"]=np.array(crop_resize_cv2(state_vis,dim=128))
     state["visual"]=np.mean(state["visual"],axis=2) # Reduce channel
 
 def oneHot(mx,x):

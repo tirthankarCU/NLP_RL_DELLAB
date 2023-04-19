@@ -20,7 +20,7 @@ class NNModel(nn.Module):
         num_dim_in=self.resnet.fc.in_features
         num_dim_out=1000
         self.resnet.fc=nn.Linear(num_dim_in,num_dim_out)
-        image_size=32*32
+        image_size=128*128
         self.fcResNet0=nn.Sequential(
             nn.Linear(num_dim_out,image_size),
             nn.ReLU()
@@ -70,6 +70,7 @@ def lossImage(img_yp,img_y):
 def train(model,reward_true,STATE,NEXT_STATE,ACTION,device,optim,epoch,verbose=False):
     model.train()
     IMG_X,IMG_Y=np.array([_state_["visual"] for _state_ in STATE]),np.array([_state_["visual"] for _state_ in NEXT_STATE])
+    IMG_X,IMG_Y=torch.from_numpy(IMG_X),torch.from_numpy(IMG_Y)
     IMG_X,IMG_Y=IMG_X.to(device),IMG_Y.to(device) # it should be torch
     ACTION=ACTION.to(device)
     IMG_YP,Q=model(IMG_X,ACTION)
@@ -79,7 +80,7 @@ def train(model,reward_true,STATE,NEXT_STATE,ACTION,device,optim,epoch,verbose=F
     loss_dqn.backward()
     loss_image.backward()
     optim.step() 
-    if epoch % 10 == 0 and verbose:
+    if epoch % 10 == 0 or verbose:
         print(f'Train Epoch:{epoch} {loss_dqn} {loss_image}')
 
 def predict(model,STATE,device,verbose=False):
@@ -87,12 +88,9 @@ def predict(model,STATE,device,verbose=False):
     model.eval()
     with torch.no_grad():
         IMG=np.array([_state_["visual"] for _state_ in STATE])
-        print(type(IMG))
         IMG=torch.from_numpy(IMG)
-        return 0,0
         IMG=IMG.to(device)
         QA=torch.empty(IMG.shape[0],0)
-        
         for actions in range(noOfActions):
             action_temp=U.oneHot(noOfActions,actions)
             action_temp=action_temp.repeat(IMG.shape[0],1)
@@ -115,5 +113,5 @@ def dbg1():
 
 if __name__=='__main__':
     # Preq: Generate my_dict.json from main.ipynb
-    # dbg1()
+    #dbg1()
     pass
