@@ -20,7 +20,7 @@ class NNModel(nn.Module):
         num_dim_in=self.resnet.fc.in_features
         num_dim_out=1000
         self.resnet.fc=nn.Linear(num_dim_in,num_dim_out)
-        image_size=60*90*3
+        image_size=32*32
         self.fcResNet0=nn.Sequential(
             nn.Linear(num_dim_out,image_size),
             nn.ReLU()
@@ -43,10 +43,9 @@ class NNModel(nn.Module):
         '''
         # DQN
         self.noOfActions=6
-        actionSize=2**self.noOfActions
         randDQNSz=100
         self.dqn=nn.Sequential(
-            nn.Linear(actionSize+self.important_features_image,randDQNSz),
+            nn.Linear(self.noOfActions+self.important_features_image,randDQNSz),
             nn.ReLU(),
             nn.Linear(randDQNSz,1),
             nn.ReLU()
@@ -55,7 +54,7 @@ class NNModel(nn.Module):
         op=self.resnet(image)
         opR0=self.fcResNet0(op) # image 
         opR1=self.fcResNet1(op)
-        q=self.dqn(torch.cat(action,opR1))
+        q=self.dqn(torch.cat([action,opR1],dim=1))
         return opR0,q
 
     def display(self):
@@ -88,18 +87,21 @@ def predict(model,STATE,device,verbose=False):
     model.eval()
     with torch.no_grad():
         IMG=np.array([_state_["visual"] for _state_ in STATE])
-        # CONVERT TO TENSOR #
+        print(type(IMG))
         IMG=torch.from_numpy(IMG)
-        # CONVERT TO TENSOR #
+        return 0,0
         IMG=IMG.to(device)
+        QA=torch.empty(IMG.shape[0],0)
+        
         for actions in range(noOfActions):
-            IMG_YP,Q=model(IMG,U.oneHot(noOfActions,actions))
-            QA.append(Q)
-        QA=np.array(QA)
-        QA_max=np.max(QA,axis=1)
-        return QA_max,np.argmax(QA,axis=1) 
+            action_temp=U.oneHot(noOfActions,actions)
+            action_temp=action_temp.repeat(IMG.shape[0],1)
+            IMG_YP,Q=model(IMG.float(),action_temp)
+            QA=torch.cat((QA,Q),dim=1)
+        return torch.max(QA,dim=1),torch.argmax(QA,dim=1) 
 
-if __name__=='__main__':
+
+def dbg1():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model=NNModel().to(device)
     model_traget=NNModel().to(device)
@@ -108,8 +110,10 @@ if __name__=='__main__':
     data=json.load(f)
     state=data
     state["visual"]=np.array(state["visual"])
-    plt.imshow(state["visual"])
-    # print(type(state["visual"]))
-    # state["visual"]=U.phi(state["visual"])
-    # print(state["visual"].shape)
-    # action=(predict(model,[state],device))[1]
+    action=(predict(model,[state,state],device))[1]
+    print(f'The action to be taken: {action}')
+
+if __name__=='__main__':
+    # Preq: Generate my_dict.json from main.ipynb
+    # dbg1()
+    pass
