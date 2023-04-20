@@ -41,6 +41,7 @@ class RlNlpWorld(gym.Env):
             "text": spaces.Text(min_length=1,max_length=100),"question":spaces.Text(min_length=1,max_length=100),
             "visual": spaces.Box(low=0, high=255, shape=(vga.WIDTH,vga.HEIGHT,3), dtype=np.uint8)
         })
+        self.spell={1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',0:'zero'}
 ############################################
     def _get_obs(self):
         return {"text": self._text,"question":self._question,"visual": self._visual}
@@ -53,11 +54,51 @@ class RlNlpWorld(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.no=np.random.randint(0,1000)
+        ## Gen initial info ##
         self.carry=False
+        self.blocksLeft=[ (self.no//10**i)%10 for i in range(3) ]
+        self.blocksLeft.reverse()
         self.boxType=BOXTYPE.NONE
         self.curr_time=0
         self._visual=vga.draw_main(self.metadata['render_modes'][self.mode],self.metadata['render_fps'],self.no)
+        self._text=f'Start the experiment. {self.getNLP()}'
         return self._get_obs(), self._get_info()
+############################################
+    def getNLP(self):
+        def nlp_util():
+            str='There are '
+            if self.blocksLeft[0]>0:
+                str=str+f'{self.spell[self.blocksLeft[0]]} big blocks left '
+            if self.blocksLeft[1]>0:
+                str=str+f'{self.spell[self.blocksLeft[1]]} medium blocks left '
+            if self.blocksLeft[2]>0:
+                str=str+f'{self.spell[self.blocksLeft[2]]} small blocks left '
+            return str
+        if self.carry==True:
+            if self.boxType==BOXTYPE.BIG:
+                putBox="big"
+                self.exp_action=[3]
+            elif self.boxType==BOXTYPE.MEDIUM:
+                putBox="medium"
+                self.exp_action=[4]
+            else:
+                putBox="small"
+                self.exp_action=[5]
+            self._text=f'Put the {putBox} box in the {putBox} digit area.'
+        else:
+            self._text=f'{nlp_util()}, so you can either pick '
+            self.exp_action=[]
+            if self.blocksLeft[0]>0:
+                self._text=self._text+f'one big block '
+                self.exp_action.append(0)
+            if self.blocksLeft[1]>0:
+                self._text=self._text+f'one medium block '
+                self.exp_action.append(1)
+            if self.blocksLeft[2]>0:
+                self._text=self._text+f'one small block '
+                self.exp_action.append(2)
+            self._text=self._text+'.'
+        return self._text
 ############################################
     def step(self, action):
 
@@ -77,6 +118,8 @@ class RlNlpWorld(gym.Env):
                 return -1
             self.boxType=BOXTYPE.NONE 
             self.carry=False 
+            # constructArrElement is where the blocks are put. 
+            self.blocksLeft[b_type.value-1]-=1
             for box in vga.constructArrElement[b_type.value-1]:
                 if box.isEmpty:
                     box.isEmpty=False 
@@ -92,6 +135,7 @@ class RlNlpWorld(gym.Env):
                 result+=cnt_box*power 
                 power/=10
             return True if self.no==result else False 
+        
         reward=0
         if action==ACTION.PICK_BIG.value:
             reward=pick(vga.big_block,BOXTYPE.BIG)
@@ -106,7 +150,9 @@ class RlNlpWorld(gym.Env):
         elif action==ACTION.PUT_SMALL.value:
             reward=put(BOXTYPE.SMALL)
 
+        reward= 1 if action in self.exp_action else reward
         self._visual=vga.drawAgain()
+        self._text=self.getNLP()
         self.curr_time+=1
         solution=checkSolution() # return True is solution is correct
         terminated=False 
