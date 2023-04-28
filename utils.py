@@ -5,6 +5,8 @@ import torch
 import torchvision.transforms as transforms
 from PIL import Image
 import cv2
+import json 
+import os
 
 def plot(data,ylb,title):
     plt.plot([i for i in range(1,)],data,color='mediumvioletred',marker='o')
@@ -41,3 +43,30 @@ def phiXtra(state):
 
 def oneHot(mx,x):
     return torch.tensor([0 if i!=x else 1 for i in range(mx)]).unsqueeze(0)
+
+unique_name={}
+name_len=10
+def save(state):
+    new_name=""
+    while True:
+        new_name_arr=[ chr(ord('a')+np.random.randint(0,name_len)) for x in range(name_len) ]
+        for ch in new_name_arr:
+            new_name+=ch
+        if new_name not in unique_name:
+            unique_name[new_name]=True 
+            break 
+    with open(f"save_state/{new_name}.json",'w') as f:
+        state["visual"]=state["visual"].tolist()
+        json.dump(state,f)
+    return new_name
+
+def delete(state):
+    del unique_name[state]
+    os.remove(f'save_state/{state}.json')
+
+def get(state):
+    f=open("my_dict.json")
+    data=json.load(f)
+    state=data
+    state["visual"]=np.array(state["visual"])
+    return state
