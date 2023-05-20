@@ -62,10 +62,9 @@ def save(state):
 
 def delete(state):
     del unique_name[state]
-    os.remove(f'save_state/{state}.json')
 
 def get(state):
-    f=open("my_dict.json")
+    f=open(f'save_state/{state}.json')
     data=json.load(f)
     state=data
     state["visual"]=np.array(state["visual"])

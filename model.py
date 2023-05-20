@@ -22,11 +22,11 @@ class NNModel(nn.Module):
         num_dim_in=self.resnet.fc.in_features
         num_dim_out=1000
         self.resnet.fc=nn.Linear(num_dim_in,num_dim_out)
-        image_size=128*128
-        self.fcResNet0=nn.Sequential(
-            nn.Linear(num_dim_out,image_size),
-            nn.ReLU()
-        )
+        # image_size=128*128
+        # self.fcResNet0=nn.Sequential(
+        #     nn.Linear(num_dim_out,image_size),
+        #     nn.ReLU()
+        # )
         self.important_features_image=1000
         self.fcResNet1=nn.Sequential(
             nn.Linear(num_dim_out,self.important_features_image),
@@ -54,10 +54,14 @@ class NNModel(nn.Module):
         )
     def forward(self,image,action):
         op=self.resnet(image)
-        opR0=self.fcResNet0(op) # image 
+        # opR0=self.fcResNet0(op) # image 
         opR1=self.fcResNet1(op)
+        if torch.cuda.is_available():
+            action=action.to(torch.device("cuda:0")) # CUDA:0 is the default cuda device in pytorch.
+            opR1=opR1.to(torch.device("cuda:0")) 
         q=self.dqn(torch.cat([action,opR1],dim=1))
-        return opR0,q
+        # return opR0,q
+        return q
 
     def display(self):
         for param in self.fcResNet0:
@@ -67,30 +71,38 @@ class NNModel(nn.Module):
 '''
 def lossDqn(p,y):
     return torch.mean((p-y)**2)
-def lossImage(img_yp,img_y):
-    sz=img_y.shape
-    img_y=img_y.reshape(sz[0],sz[-1]*sz[-2])
-    return torch.mean((img_yp-img_y)**2)
-def train(model,reward_true,STATE,NEXT_STATE,ACTION,device,optim,type='dqn',verbose=False):
+# def lossImage(img_yp,img_y):
+#     sz=img_y.shape
+#     img_y=img_y.reshape(sz[0],sz[-1]*sz[-2])
+#     return torch.mean((img_yp-img_y)**2)
+# def train(model,reward_true,STATE,NEXT_STATE,ACTION,device,optim,type='dqn',verbose=False):
+def train(model,reward_true,STATE,ACTION,device,optim,type='dqn',verbose=False):
     global epochA
+    # IF YOU NEED TO ENABLE IMAGE TRAINING REMOVE THE FOLLOWING IF CONDITION.
+    if type=='image':
+        return 
     model.train()
-    IMG_X,IMG_Y=np.array([_state_["visual"] for _state_ in STATE]),np.array([_state_["visual"] for _state_ in NEXT_STATE])
-    IMG_X,IMG_Y=torch.from_numpy(IMG_X),torch.from_numpy(IMG_Y)
-    IMG_X,IMG_Y=IMG_X.to(device),IMG_Y.to(device) # it should be torch
+    # IMG_X,IMG_Y=np.array([_state_["visual"] for _state_ in STATE]),np.array([_state_["visual"] for _state_ in NEXT_STATE])/255
+    # IMG_X,IMG_Y=torch.from_numpy(IMG_X),torch.from_numpy(IMG_Y)
+    # IMG_X,IMG_Y=IMG_X.to(device),IMG_Y.to(device) # it should be torch
+    IMG_X=np.array([_state_["visual"] for _state_ in STATE])
+    IMG_X=torch.from_numpy(IMG_X)
+    IMG_X=IMG_X.to(device)
     ACTION=ACTION.to(device)
     reward_true=torch.tensor(reward_true)
-    IMG_YP,Q=model(IMG_X.float(),ACTION)
+    # IMG_YP,Q=model(IMG_X.float(),ACTION)
+    Q=model(IMG_X.float(),ACTION)
     loss_dqn,loss_image=-1,-1
     if type=='dqn':
         optim.zero_grad()
         loss_dqn=lossDqn(Q,reward_true)
         loss_dqn.backward()
         optim.step()
-    elif type=='image': # Putting if-else is necessary otherwise there is an issue calculating gradient & doing back prop. 
-        optim.zero_grad()
-        loss_image=lossImage(IMG_YP,IMG_Y)
-        loss_image.backward()
-        optim.step() 
+    # elif type=='image': # Putting if-else is necessary otherwise there is an issue calculating gradient & doing back prop. 
+    #     optim.zero_grad()
+    #     loss_image=lossImage(IMG_YP,IMG_Y)
+    #     loss_image.backward()
+    #     optim.step() 
     if (epochA//2) % 50 == 0 or verbose:
         print(f'Train Epoch:{epochA} DQN_Loss:{loss_dqn} IMG_Loss:{loss_image}')
     epochA+=1
@@ -106,7 +118,11 @@ def predict(model,STATE,device,verbose=False):
         for actions in range(noOfActions):
             action_temp=U.oneHot(noOfActions,actions)
             action_temp=action_temp.repeat(IMG.shape[0],1)
-            IMG_YP,Q=model(IMG.float(),action_temp)
+            #IMG_YP,Q=model(IMG.float(),action_temp)
+            Q=model(IMG.float(),action_temp)
+            if torch.cuda.is_available():
+                Q=Q.to(torch.device("cuda:0")) 
+                QA=QA.to(torch.device("cuda:0")) 
             QA=torch.cat((QA,Q),dim=1)
         return torch.max(QA,dim=1),torch.argmax(QA,dim=1) 
 

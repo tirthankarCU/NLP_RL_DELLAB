@@ -53,7 +53,7 @@ class RlNlpWorld(gym.Env):
 ############################################
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        self.no=np.random.randint(0,1000)
+        self.no=np.random.randint(1,1000)
         ## Gen initial info ##
         self.carry=False
         self.blocksLeft=[ (self.no//10**i)%10 for i in range(3) ]
@@ -62,7 +62,7 @@ class RlNlpWorld(gym.Env):
         self.curr_time=0
         self._visual=vga.draw_main(self.metadata['render_modes'][self.mode],self.metadata['render_fps'],self.no)
         self._text=f'Start the experiment. {self.getNLP()}'
-        return self._get_obs(), self._get_info()
+        return self._get_obs()
 ############################################
     def getNLP(self):
         def nlp_util():
@@ -164,7 +164,7 @@ class RlNlpWorld(gym.Env):
         reward = sign*10 if terminated else reward
         observation = self._get_obs()
         info = self._get_info()
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, info
 ############################################
     def render(self):
         pass 
